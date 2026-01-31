@@ -36,3 +36,4 @@ server/uploads/*
 # Cache
 .cache/
 .turbo/
+.claude/
