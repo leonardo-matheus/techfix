@@ -1,5 +1,5 @@
-import api from './api'
 import type { Project } from '@/types'
+import { mockProjects } from '@/data/projects'
 
 interface GetProjectsParams {
   category?: string
@@ -8,82 +8,81 @@ interface GetProjectsParams {
   search?: string
 }
 
-// Fallback to static data for GitHub Pages demo
-async function fetchStaticProjects(): Promise<Project[]> {
-  const baseUrl = import.meta.env.BASE_URL || '/'
-  const response = await fetch(`${baseUrl}data/projects.json`)
-  return response.json()
-}
-
 export const projectsService = {
   async getPublicProjects(): Promise<Project[]> {
-    try {
-      const { data } = await api.get<Project[]>('/projects/public')
-      return data
-    } catch {
-      // Fallback to static data
-      return fetchStaticProjects()
-    }
+    return mockProjects.filter(p => p.status === 'PUBLISHED')
   },
 
   async getProjectBySlug(slug: string): Promise<Project> {
-    try {
-      const { data } = await api.get<Project>(`/projects/public/${slug}`)
-      return data
-    } catch {
-      // Fallback to static data
-      const projects = await fetchStaticProjects()
-      const project = projects.find(p => p.slug === slug)
-      if (!project) throw new Error('Project not found')
-      return project
-    }
+    const project = mockProjects.find(p => p.slug === slug)
+    if (!project) throw new Error('Project not found')
+    return project
   },
 
   async getCategories(): Promise<string[]> {
-    try {
-      const { data } = await api.get<string[]>('/projects/categories')
-      return data
-    } catch {
-      // Fallback to static data
-      const projects = await fetchStaticProjects()
-      const categories = [...new Set(projects.map(p => p.category))]
-      return categories
-    }
+    const categories = [...new Set(mockProjects.map(p => p.category))]
+    return categories
   },
 
-  // Admin methods
+  // Admin methods (mock for demo)
   async getProjects(params?: GetProjectsParams): Promise<Project[]> {
-    const { data } = await api.get<Project[]>('/projects', { params })
-    return data
+    let projects = [...mockProjects]
+    if (params?.category) {
+      projects = projects.filter(p => p.category === params.category)
+    }
+    if (params?.status) {
+      projects = projects.filter(p => p.status === params.status)
+    }
+    if (params?.featured !== undefined) {
+      projects = projects.filter(p => p.featured === params.featured)
+    }
+    if (params?.search) {
+      const search = params.search.toLowerCase()
+      projects = projects.filter(p =>
+        p.title.toLowerCase().includes(search) ||
+        p.description.toLowerCase().includes(search)
+      )
+    }
+    return projects
   },
 
   async getProject(id: string): Promise<Project> {
-    const { data } = await api.get<Project>(`/projects/${id}`)
-    return data
+    const project = mockProjects.find(p => p.id === id)
+    if (!project) throw new Error('Project not found')
+    return project
   },
 
   async createProject(
     project: Omit<Project, 'id' | 'views' | 'createdAt' | 'updatedAt'>
   ): Promise<Project> {
-    const { data } = await api.post<Project>('/projects', project)
-    return data
+    // Mock - just return the project with generated fields
+    return {
+      ...project,
+      id: String(mockProjects.length + 1),
+      views: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
   },
 
   async updateProject(
     id: string,
     project: Partial<Project>
   ): Promise<Project> {
-    const { data } = await api.put<Project>(`/projects/${id}`, project)
-    return data
+    const existing = mockProjects.find(p => p.id === id)
+    if (!existing) throw new Error('Project not found')
+    return { ...existing, ...project, updatedAt: new Date().toISOString() }
   },
 
   async deleteProject(id: string): Promise<void> {
-    await api.delete(`/projects/${id}`)
+    // Mock - no-op
+    console.log('Delete project:', id)
   },
 
   async reorderProjects(
     projects: Array<{ id: string; order: number }>
   ): Promise<void> {
-    await api.post('/projects/reorder', { projects })
+    // Mock - no-op
+    console.log('Reorder projects:', projects)
   },
 }
