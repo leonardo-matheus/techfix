@@ -71,8 +71,10 @@ function AdminLayout() {
 }
 
 function App() {
+  const basename = import.meta.env.BASE_URL || '/'
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Routes>
         {/* Public Routes */}
         <Route element={<PublicLayout />}>
