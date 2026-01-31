@@ -10,7 +10,8 @@ interface GetProjectsParams {
 
 // Fallback to static data for GitHub Pages demo
 async function fetchStaticProjects(): Promise<Project[]> {
-  const response = await fetch('/data/projects.json')
+  const baseUrl = import.meta.env.BASE_URL || '/'
+  const response = await fetch(`${baseUrl}data/projects.json`)
   return response.json()
 }
 
